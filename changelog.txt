@@ -3,7 +3,7 @@ Version: 1.0.2
   Changes:
     - Detect recipes that require more than 65k of an ingredient and disables them. Gives a nice warning message in the description too.
     - Now supports recipes without ingredients. In this case time/energy will be increased instead by modules.
-	- Quality recipes should only be enabled after researching the appropriate tech. This was a minor oversight.
+    - Quality recipes should only be enabled after researching the appropriate tech. This was a minor oversight.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.1
   Changes:
