@@ -1,0 +1,9 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+  Changes:
+    - Fixed mod ignoring higher quality quality modules.
+    - No longer create variants for crafting machines that don't accept quality modules. (Better mod compatiblity.)
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+  Changes:
+    - Initial release.
