@@ -116,16 +116,14 @@ local function generate_crafting_machine_variants(entity)
 		end
 
 		local mining_result = entity.mineable and (entity.mineable.result or entity.mineable.results[0].name)
-		if mining_result == nil then
-			mining_result = entity.name
-		end
 		
 		if cpy.placeable_by and cpy.placeable_by[1] == nil then
-			cpy.placeable_by = {cpy.placeable_by}
-		else
-			cpy.placeable_by = cpy.placeable_by or {}
+			cpy.placeable_by = {{item = cpy.placeable_by, count = 1}}
 		end
-		table.insert(cpy.placeable_by, {item = mining_result, count = 1})
+		if mining_result ~= nil then
+			cpy.placeable_by = cpy.placeable_by or {}
+			table.insert(cpy.placeable_by, {item = mining_result, count = 1})
+		end
 
 		cpy.deconstruction_alternative = entity.name
 		cpy.hidden = true

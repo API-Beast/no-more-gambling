@@ -121,6 +121,11 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		return false
 	end
 
+	-- Don't mess with random, modded, possibly scripted entities
+	if entity.has_flag("not-selectable-in-game") then
+		return false
+	end
+
 	local num_quality_mods = count_modules(entity)
 	local base_name = get_base(entity.name)
 	local target_name = base_name.."-upcrafting-"..num_quality_mods
