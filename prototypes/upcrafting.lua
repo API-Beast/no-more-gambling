@@ -53,6 +53,15 @@ local function generate_recipe_variants(recipe)
 	end
 end
 
+local function contains(arr, item)
+    for i = 1, #arr do
+        if arr[i] == item then
+            return true
+        end
+    end
+    return false
+end
+
 local function generate_crafting_machine_variants(entity)
 	if string.find(entity.name, "upcraft") then
 		return
@@ -62,6 +71,12 @@ local function generate_crafting_machine_variants(entity)
 	if entity and entity.effect_receiver and entity.effect_receiver.base_effect and entity.effect_receiver.base_effect.quality then
 		entity.effect_receiver.base_effect.quality = entity.effect_receiver.base_effect.quality * (0.1 / settings.startup["quality-skip-chance"].value)
 	end
+
+	-- Mod Compatibility: Some mods use crafting machines for weird things. If it can't use modules, don't create variants.
+	if entity.effect_receiver and entity.uses_module_effects ~= nil and entity.uses_module_effects == false then return end
+	if entity.allowed_effects and contains(entity.allowed_effects, "quality") == false then return end
+	if entity.allowed_module_categories and contains(entity.allowed_module_categories, "quality") == false then return end
+	if entity.module_slots == nil or entity.module_slots == 0 then return end
 
 	local max = settings.startup["quality-module-cap"].value
 	for n=1,max do
