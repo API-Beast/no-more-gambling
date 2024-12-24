@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+  Changes:
+    - Fix recyling recipes not being unlocked.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
   Changes:
     - Hide upcrafting recipe unlocks on technology UI.

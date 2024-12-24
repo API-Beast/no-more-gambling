@@ -18,7 +18,6 @@ local function generate_upcrafting_recipe(recipe, n)
 	end
 	cpy.category = (recipe.category or "crafting").."-upcrafting-"..n
 	cpy.allow_decomposition = false
-	cpy.enabled = false
 	cpy.hide_from_player_crafting = true
 	cpy.hidden_in_factoriopedia = true
 
