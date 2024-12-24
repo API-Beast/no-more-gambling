@@ -9,8 +9,10 @@ local function count_modules(entity)
 	local count = 0
 	for i = 1, #mods do
 		local mod = mods[i]
-		if mod.name == "quality-module" or mod.name == "quality-module-2" or  mod.name == "quality-module-3" then
-			count = count + 1
+		if mod.valid_for_read == true and mod.valid == true then
+			if mod.name == "quality-module" or mod.name == "quality-module-2" or  mod.name == "quality-module-3" then
+				count = count + 1
+			end
 		end
 	end
 	return math.min(count, settings.startup["quality-module-cap"].value)
