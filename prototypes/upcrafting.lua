@@ -23,13 +23,27 @@ local function generate_upcrafting_recipe(recipe, n)
 	cpy.hidden_in_factoriopedia = true
 
 	-- Quality does nothing for pure fluid recipes.
+	local disable_recipe = false
 	if solid_product_found == true then
 		cpy.maximum_productivity = (recipe.maximum_productivity or 3.0) * cost_factor
 		-- cpy.emissions_multiplier = (recipe.emissions_multiplier or 1.0) * cost_factor / energy_factor
 		cpy.energy_required = (recipe.energy_required or 0.5) * energy_factor
-		for i, item in ipairs(cpy.ingredients) do
-			cpy.ingredients[i].amount = item.amount * cost_factor
+		if cpy.ingredients and #cpy.ingredients > 0 then
+			for i, item in ipairs(cpy.ingredients) do
+				cpy.ingredients[i].amount = item.amount * cost_factor
+				if cpy.ingredients[i].amount > 65535 then
+					disable_recipe = true
+				end
+			end
+		else
+			cpy.energy_required = (recipe.energy_required or 0.5) * (energy_factor * cost_factor)
 		end
+	end
+
+	if disable_recipe then
+		cpy.ingredients = table.deepcopy(recipe.ingredients or {})
+		cpy.localised_description = {"quality-crafting-impossible", tostring(n)}
+		cpy.allow_quality = false
 	end
   
 	data:extend(
