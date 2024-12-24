@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.3
+  Changes:
+    - Hide upcrafting recipe unlocks on technology UI.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.2
   Changes:
     - Detect recipes that require more than 65k of an ingredient and disables them. Gives a nice warning message in the description too.

@@ -170,7 +170,7 @@ local function technology_add_recipes(technology)
 			for n=1,max do
 				local name = base_recipe.."-upcrafting-"..n
 				if data.raw['recipe'][name] then
-					table.insert(technology.effects, {type = "unlock-recipe", recipe = name})
+					table.insert(technology.effects, {type = "unlock-recipe", recipe = name, hidden = true})
 				end
 			end
 		end
