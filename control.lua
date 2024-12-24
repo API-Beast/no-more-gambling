@@ -4,6 +4,18 @@ local function get_base(name)
 	return name:gsub("%-upcrafting%-%d+", "")
 end
 
+local function count_modules(entity)
+	local mods = entity.get_module_inventory()
+	local count = 0
+	for i = 1, #mods do
+		local mod = mods[i]
+		if mod.name == "quality-module" or mod.name == "quality-module-2" or  mod.name == "quality-module-3" then
+			count = count + 1
+		end
+	end
+	return math.min(count, settings.startup["quality-module-cap"].value)
+end
+
 local function adjust_recipe(recipe_name, crafter_name)
 	if recipe_name == nil or crafter_name == nil then
 		return recipe_name
@@ -22,8 +34,8 @@ local function set_recipe(entity, recipe, quality)
 	if recipe == nil then
 		return
 	end
-	local mods = entity.get_module_inventory()
-	local num_quality_mods = math.min(mods.get_item_count("quality-module") + mods.get_item_count("quality-module-2") + mods.get_item_count("quality-module-3"), settings.startup["quality-module-cap"].value)
+	
+	local num_quality_mods = count_modules(entity)
 	local base_recipe = get_base(recipe.name)
 	local target_recipe = base_recipe.."-upcrafting-"..num_quality_mods
 	if num_quality_mods == 0 then
@@ -107,7 +119,7 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		return false
 	end
 
-	local num_quality_mods = math.min(mods.get_item_count("quality-module") + mods.get_item_count("quality-module-2") + mods.get_item_count("quality-module-3"), settings.startup["quality-module-cap"].value)
+	local num_quality_mods = count_modules(entity)
 	local base_name = get_base(entity.name)
 	local target_name = base_name.."-upcrafting-"..num_quality_mods
 	if num_quality_mods == 0 then
