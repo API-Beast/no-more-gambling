@@ -138,9 +138,6 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	end
 	log("Patching "..entity.name.." to "..target_name)
 
-	local player = entity.last_user
-	local products_finished = entity.products_finished
-	local has_open = (player and player.opened == entity)
 	local inventories = {
 		entity.get_inventory(defines.inventory.assembling_machine_input),
 		entity.get_inventory(defines.inventory.assembling_machine_output),
@@ -172,6 +169,9 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		end
 	end
 	
+	local player = entity.last_user
+	local has_open = (player and player.opened == entity)
+	local old_name = entity.name
 	local info = {
 		name = target_name,
 		position = entity.position,
@@ -186,6 +186,14 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		spill = false,
 		player = player
 		-- Else it will duplicate the mineable entity
+	}
+	local extra = {
+		health = entity.health,
+		direction = entity.direction,
+		mirroring = entity.mirroring,
+		orientation = entity.orientation,
+		products_finished = entity.products_finished,
+		last_user = entity.last_user
 	}
 	if entity.type == 'assembling-machine' then
 		info.recipe = adjust_recipe(recipe_name, target_name)
@@ -202,21 +210,21 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		end
 	end
 
-	local old_health = entity.health
-	local old_name = entity.name
 	-- Catch the next on_mined event
 	prevent_mining_entity = entity
 	local new_entity = entity.surface.create_entity(info)
 	patch_undo_history(info.position, old_name, target_name)
-	new_entity.last_user = player
-	new_entity.products_finished = products_finished
-	new_entity.health = old_health
-	if has_open then
-		player.opened = new_entity
-	end
 	if new_entity.type == 'assembling-machine' then
 		set_recipe(new_entity, recipe, recipe_quality)
 	end
+	for prop, value in pairs(extra) do
+		new_entity[prop] = value
+	end
+	if has_open then
+		player.opened = new_entity
+	end
+
+	-- Give back overflowing items.
 	local dump = new_entity.get_inventory(defines.inventory.assembling_machine_dump) or new_entity.get_inventory(defines.inventory.burnt_result) or new_entity.get_inventory(defines.inventory.assembling_machine_output)
 	if actor then
 		dump = actor
@@ -228,6 +236,8 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 			dump.insert(item_stacks[i])
 		end
 	end
+
+	-- Recover the item requests.
 	local stack = 0
 	for _, request in ipairs(to_request) do
 		for i = 1, request.count do
