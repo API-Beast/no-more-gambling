@@ -126,10 +126,10 @@ local function generate_crafting_machine_variants(entity)
 			cpy.localised_name = {"entity-name." .. entity.name}
 		end
 
-		local cost_increase = 100.0 + settings.startup['quality-cost-increase'].value * 100.0 * n
-		local time_increase = 100.0 + settings.startup['quality-crafting-time-increase'].value * 100.0 * n
+		local cost_increase = settings.startup['quality-cost-increase'].value * 100.0 * n
+		local time_increase = settings.startup['quality-crafting-time-increase'].value * 100.0 * n
 		cpy.localised_description = { "", {"description.quality-cost-increase", tostring(cost_increase)} }
-		if time_increase > 101.0 then
+		if time_increase > 1.0 then
 			cpy.localised_description = { "", {"description.quality-cost-increase", tostring(cost_increase)}, "\n", {"description.quality-crafting-time-increase", tostring(time_increase)} }
 		end
 
