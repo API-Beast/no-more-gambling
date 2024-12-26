@@ -92,6 +92,29 @@ local function generate_crafting_machine_variants(entity)
 	if entity.allowed_module_categories and contains(entity.allowed_module_categories, "quality") == false then return end
 	if entity.module_slots == nil or entity.module_slots == 0 then return end
 
+	-- We need to scan all items to find out what can place the base entity
+	local placeable_by = {}
+	local hash_set = {}
+	-- Import the Placeable By from the base entity
+	-- Single Item
+	if entity.placeable_by and entity.placeable_by[1] == nil then
+		table.insert(placeable_by, {{item = entity.placeable_by, count = 1}})
+		hash_set[placeable_by] = true
+	-- Array
+	elseif entity.placeable_by and entity.placeable_by[1] ~= nil then
+		placeable_by = table.deepcopy(entity.placeable_by)
+		for i=1, #placeable_by do
+			hash_set[placeable_by[i].item] = true
+		end
+	end
+	-- Finally: Scan items
+	for _, item in pairs(data.raw.item) do
+		if item.place_result == entity.name and hash_set[item.name] == nil then
+			table.insert(placeable_by, {item = item.name, count = 1})
+			hash_set[item.name] = true
+		end
+	end
+
 	local max = settings.startup["quality-module-cap"].value
 	for n=1,max do
 		local cpy = table.deepcopy(entity)
@@ -114,16 +137,7 @@ local function generate_crafting_machine_variants(entity)
 			cpy.fixed_recipe = entity.fixed_recipe.."-upcrafting-"..n
 		end
 
-		local mining_result = entity.mineable and (entity.mineable.result or entity.mineable.results[0].name)
-		
-		if cpy.placeable_by and cpy.placeable_by[1] == nil then
-			cpy.placeable_by = {{item = cpy.placeable_by, count = 1}}
-		end
-		if mining_result ~= nil then
-			cpy.placeable_by = cpy.placeable_by or {}
-			table.insert(cpy.placeable_by, {item = mining_result, count = 1})
-		end
-
+		cpy.placeable_by = placeable_by
 		cpy.deconstruction_alternative = entity.name
 		cpy.hidden = true
 		data:extend(
