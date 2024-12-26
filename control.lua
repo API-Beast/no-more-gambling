@@ -47,18 +47,13 @@ local function set_recipe(entity, recipe, quality)
 end
 
 
-local function patch_undo_action(action, position, old_name, new_name)
+local function patch_undo_action(action, position, base_name, new_name)
 	if action.target ~= nil then
-		if action.target.position.x == position.x and action.target.position.y == position.y and action.target.name == old_name then
-			log("-----------")
-			log(serpent.block(action))
+		if action.target.position.x == position.x and action.target.position.y == position.y and get_base(action.target.name) == base_name then
 			action.target.name = new_name
 			if action.target.recipe then
 				action.target.recipe = adjust_recipe(action.target.recipe, new_name)
 			end
-			log("---------->")
-			log(serpent.block(action))
-			log("-----------")
 			return action
 		else
 			return nil
@@ -66,7 +61,7 @@ local function patch_undo_action(action, position, old_name, new_name)
 	end
 end
 
-local function patch_undo_history(position, old_name, new_name)
+local function patch_undo_history(position, base_name, new_name)
 	for i = 1, #game.connected_players do
 		local player = game.connected_players[i]
 		local undo_stack = player.undo_redo_stack
@@ -80,11 +75,10 @@ local function patch_undo_history(position, old_name, new_name)
 			for j = 1, undo_count do
 				local actions = undo_stack.get_undo_item(j)
 				for k, action in ipairs(actions) do
-					if patch_undo_action(action, position, old_name, new_name) then
+					if patch_undo_action(action, position, base_name, new_name) then
 						if l <= 2 then
 							to_delete[l] = {j, k}
 							l = l + 1
-							log("--- To be deleted ---")
 						end
 					end
 				end
@@ -96,7 +90,15 @@ local function patch_undo_history(position, old_name, new_name)
 				end
 			end
 			for _, index in ipairs(to_delete) do
+				log("Deleting from Undo History: ".."[" .. index[1] .. ", ".. index[2] .. "] = "..serpent.block(undo_stack.get_undo_item(index[1])[index[2]]))
+				log(serpent.block(last_item))
 				undo_stack.remove_undo_action(index[1], index[2])
+				-- Adjust the next indicies
+				for _, next_index in ipairs(to_delete) do
+					if next_index[1] == index[1] and index[2] < next_index[2] then
+						next_index[2] = next_index[2] - 1
+					end
+				end
 			end
 		end
 	end
@@ -136,7 +138,6 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	if entity.name == target_name then
 		return false
 	end
-	log("Patching "..entity.name.." to "..target_name)
 
 	local inventories = {
 		entity.get_inventory(defines.inventory.assembling_machine_input),
@@ -218,7 +219,7 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	-- Catch the next on_mined event
 	prevent_mining_entity = entity
 	local new_entity = entity.surface.create_entity(info)
-	patch_undo_history(info.position, old_name, target_name)
+	patch_undo_history(info.position, base_name, target_name)
 	if new_entity.type == 'assembling-machine' then
 		set_recipe(new_entity, recipe, recipe_quality)
 	end
