@@ -199,7 +199,7 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		info.recipe = adjust_recipe(recipe_name, target_name)
 	end
 
-
+	-- Remember what item requests were enabled for this entity.
 	local item_request_proxies = entity.surface.find_entities_filtered{area=entity.bounding_box, name='item-request-proxy', force=entity.force}
 	local to_request = {}
 	for _, request in ipairs(item_request_proxies) do
@@ -208,6 +208,11 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 				table.insert(to_request, request)
 			end
 		end
+	end
+	
+	-- Flush all fluidboxes so the liquids don't get lost.
+	for i=1,#entity.fluidbox do
+		entity.fluidbox.flush(i)
 	end
 
 	-- Catch the next on_mined event
@@ -224,7 +229,7 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		player.opened = new_entity
 	end
 
-	-- Give back overflowing items.
+	-- Give back items.
 	local dump = new_entity.get_inventory(defines.inventory.assembling_machine_dump) or new_entity.get_inventory(defines.inventory.burnt_result) or new_entity.get_inventory(defines.inventory.assembling_machine_output)
 	if actor then
 		dump = actor
