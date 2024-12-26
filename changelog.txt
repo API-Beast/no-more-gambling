@@ -2,10 +2,10 @@
 Version: 1.1.0
   Changes:
     - The total cost increase and time increase is now displayed on the crafting machine.
-	- Implement Setting Copy & Paste for machines with differing amounts of Quality modules.
+    - Implement Setting Copy & Paste for machines with differing amounts of Quality modules.
     - More robust code to detect the correct placeable_by property. (Better mod compatiblity.)
     - Explicitly hide upcrafting recipes from Signal UI.
-	- More robust entity repplacement:
+    - More robust entity repplacement:
       - Fix some crafting machines not keeping their rotation when inserting/removing quality modules.
       - Fix losing modules when selecting recipe that is incompatible with said module.
       - Flush fluids when adding/removing quality modules so that they don't get lost.
