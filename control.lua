@@ -267,8 +267,13 @@ local function on_built(event)
 end
 
 local function on_mined(event)
-	if event.entity == prevent_mining_entity then
-		event.buffer.clear()
+	if event.entity and event.buffer and event.entity == prevent_mining_entity then
+		local minables = event.entity.prototype and event.entity.prototype.mineable_properties and event.entity.prototype.mineable_properties.products
+		for _, minable in ipairs(minables) do
+			if minable.type == "item" then
+				event.buffer.remove({name = minable.name, count = minable.amount or minable.amount_max, quality = minable.quality or nil})
+			end
+		end
 		prevent_mining_entity = nil
 	end
 end
