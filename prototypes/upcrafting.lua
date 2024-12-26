@@ -110,8 +110,6 @@ local function generate_crafting_machine_variants(entity)
 			cpy.localised_description = { "", {"description.quality-cost-increase", tostring(cost_increase)}, "\n", {"description.quality-crafting-time-increase", tostring(time_increase)} }
 		end
 
-		cpy.localised_description = description
-
 		if entity.fixed_recipe ~= nil then
 			cpy.fixed_recipe = entity.fixed_recipe.."-upcrafting-"..n
 		end
