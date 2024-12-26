@@ -20,6 +20,7 @@ local function generate_upcrafting_recipe(recipe, n)
 	cpy.allow_decomposition = false
 	cpy.hide_from_player_crafting = true
 	cpy.hidden_in_factoriopedia = true
+	cpy.hide_from_signal_gui = true
 
 	-- Quality does nothing for pure fluid recipes.
 	local disable_recipe = false
