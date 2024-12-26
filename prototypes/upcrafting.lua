@@ -115,7 +115,11 @@ local function generate_crafting_machine_variants(entity)
 		end
 	end
 
+	local entity_variants = {entity.name}
 	local max = settings.startup["quality-module-cap"].value
+	for n=1,max do
+		table.insert(entity_variants, entity.name.."-upcrafting-"..n)
+	end
 	for n=1,max do
 		local cpy = table.deepcopy(entity)
 		cpy.name = entity.name.."-upcrafting-"..n
@@ -140,6 +144,8 @@ local function generate_crafting_machine_variants(entity)
 		cpy.placeable_by = placeable_by
 		cpy.deconstruction_alternative = entity.name
 		cpy.hidden = true
+		-- Not necessary, it seems the base game already allows copy pasting settings between any crafting machines
+		-- cpy.additional_pasteable_entities = entity_variants
 		data:extend(
 			{cpy}
 		)

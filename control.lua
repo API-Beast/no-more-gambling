@@ -36,13 +36,8 @@ local function set_recipe(entity, recipe, quality)
 	if recipe == nil then
 		return
 	end
-	
-	local num_quality_mods = count_modules(entity)
-	local base_recipe = get_base(recipe.name)
-	local target_recipe = base_recipe.."-upcrafting-"..num_quality_mods
-	if num_quality_mods == 0 then
-		target_recipe = base_recipe
-	end
+	local target_recipe = adjust_recipe(recipe and (recipe.name or recipe), entity.name)
+	log("Set Recipe for "..serpent.block(entity).." to "..target_recipe)
 	entity.set_recipe(target_recipe, quality)
 end
 
@@ -284,6 +279,16 @@ local function on_mined(event)
 	end
 end
 
+local function on_entity_settings_pasted(event)
+	if event.source.type == "crafting-machine" or event.source.type == "assembling-machine" then
+		if event.destination.type == "crafting-machine" or event.destination.type == "assembling-machine" then
+			local recipe, quality = event.source.get_recipe()
+			local actor = (event.player_index and game.get_player(event.player_index).character) or (event.player_index and game.get_player(event.player_index))
+			set_recipe(event.destination, recipe, quality, actor)
+		end
+	end
+end
+
 local function rescan()
     for _, surface in pairs(game.surfaces) do
         for _, entity in pairs(surface.find_entities_filtered{type={"furnace", "assembling-machine"}}) do
@@ -303,7 +308,7 @@ script.on_event(defines.events.on_robot_built_entity, on_built, {filter})
 script.on_event(defines.events.on_space_platform_built_entity, on_built, {filter})
 script.on_event(defines.events.on_player_fast_transferred, on_built)
 script.on_event(defines.events.on_player_flipped_entity, on_built)
-script.on_event(defines.events.on_entity_settings_pasted, on_built)
+script.on_event(defines.events.on_entity_settings_pasted, on_entity_settings_pasted)
 
 script.on_event(defines.events.on_player_mined_entity, on_mined, {filter})
 script.on_event(defines.events.on_space_platform_mined_entity, on_mined, {filter})
