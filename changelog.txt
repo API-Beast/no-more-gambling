@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.1
+  Changes:
+    - Fix typo in copying placeable_by.
+---------------------------------------------------------------------------------------------------
 Version: 1.1.0
   Changes:
     - The total cost increase and time increase is now displayed on the crafting machine.

@@ -98,7 +98,7 @@ local function generate_crafting_machine_variants(entity)
 	-- Import the Placeable By from the base entity
 	-- Single Item
 	if entity.placeable_by and entity.placeable_by[1] == nil then
-		table.insert(placeable_by, {{item = entity.placeable_by, count = 1}})
+		table.insert(placeable_by, {item = entity.placeable_by, count = 1})
 		hash_set[placeable_by] = true
 	-- Array
 	elseif entity.placeable_by and entity.placeable_by[1] ~= nil then
