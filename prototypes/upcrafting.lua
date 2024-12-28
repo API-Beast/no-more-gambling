@@ -141,7 +141,9 @@ local function generate_crafting_machine_variants(entity)
 			cpy.fixed_recipe = entity.fixed_recipe.."-upcrafting-"..n
 		end
 
-		cpy.placeable_by = placeable_by
+		if #placeable_by >= 1 then
+			cpy.placeable_by = placeable_by
+		end
 		cpy.deconstruction_alternative = entity.name
 		cpy.hidden = true
 		-- Not necessary, it seems the base game already allows copy pasting settings between any crafting machines
