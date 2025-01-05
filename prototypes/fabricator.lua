@@ -24,8 +24,8 @@ data:extend
 	},
 	{
 		type = "technology",
-		name = "quality-fabricator",
-		icon = "__quality__/graphics/technology/quality-module-1.png", -- TODO
+		name = "component-fabricator",
+		icon = "__no-more-gambling__/graphics/technology/fabricator.png",
 		icon_size = 256,
 		effects =
 		{
