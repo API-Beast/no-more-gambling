@@ -2,6 +2,7 @@ require("__base__.prototypes.entity.assemblerpipes")
 require("__base__.prototypes.entity.pipecovers")
 require("circuit-connector-sprites")
 local sounds = require("__base__.prototypes.entity.sounds")
+local item_sounds = require("__base__.prototypes.item_sounds")
 
 local categories = {"fabrication"}
 for i, str in ipairs(categories) do

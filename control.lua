@@ -199,12 +199,11 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 
 	-- Remember what item requests were enabled for this entity.
 	local item_request_proxies = entity.surface.find_entities_filtered{area=entity.bounding_box, name='item-request-proxy', force=entity.force}
-	local to_request = {}
+	
+	local requests = {}
 	for _, request in ipairs(item_request_proxies) do
 		if request.proxy_target == entity then
-			for _, request in ipairs(request.item_requests) do
-				table.insert(to_request, request)
-			end
+			table.insert(requests, {position = request.position, insert_plan = request.insert_plan, removal_plan = request.removal_plan})
 		end
 	end
 	
@@ -241,20 +240,17 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	end
 
 	-- Recover the item requests.
-	local stack = 0
-	for _, request in ipairs(to_request) do
-		for i = 1, request.count do
-			local new_request = new_entity.surface.create_entity({
-				name = "item-request-proxy",
-				target = new_entity,
-				modules = {{id = {name = request.name, quality = request.quality}, items = {in_inventory = {{inventory = defines.inventory.assembling_machine_modules, stack = stack, count = 1}}, grid_count = nil}}},
-				fast_replace = false,
-				position = new_entity.position,
-				force = new_entity.force
-			})
-			stack = stack + 1
-		end
+	for request in ipairs(requests) do
+		new_entity.surface.create_entity({
+			name = "item-request-proxy",
+			target = new_entity,
+			modules = request.insert_plan,
+			removal_plan = request.removal_plan,
+			position = request.position,
+			force = new_entity.force
+		})
 	end
+
 	return true
 end
 
