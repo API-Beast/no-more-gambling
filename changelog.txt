@@ -16,7 +16,7 @@ Version: 1.2.0
     - For example Ore Washing takes 5 ore as ingredient, but creates 2-3 ore as output, meaning the ore cost is now calculated as 5 - 2.5 = 2.5.
     - Upcrafting Pentapod Eggs and Bacteria now only requires additional nutrients/bioflux/water, as they take less inputs than outputs.
     - And of course the same logic applies to all the asteroid processing and all self-referential recipes from mods as well.
-  - More robust handling of item requests. This needs version 2.0.11 of Factorio, as that's when the API for this was introduced.
+  - More robust handling of item requests when inserting quality modules. This needs version 2.0.11 of Factorio, as that's when the API for this was introduced.
   Misc:
   - Change text capitalization to be consistent with base game.
 ---------------------------------------------------------------------------------------------------
