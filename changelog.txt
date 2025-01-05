@@ -1,5 +1,7 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.0
+  Known Issues:
+  - Version 2.0.28 of Factorio doesn't allow for undo patching anymore. This does not seem to be fixable. The undo history patching has been disabled if the game version is above 2.0.20.
   Balance:
   - Default Cost Increase lowered from +350% to +225%.
   - Default Time Increase lowered from +50% to 0%.
@@ -15,6 +17,8 @@ Version: 1.2.0
     - Upcrafting Pentapod Eggs and Bacteria now only requires additional nutrients/bioflux/water, as they take less inputs than outputs.
     - And of course the same logic applies to all the asteroid processing and all self-referential recipes from mods as well.
   - More robust handling of item requests. This needs version 2.0.11 of Factorio, as that's when the API for this was introduced.
+  Misc:
+  - Change text capitalization to be consistent with base game.
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.2
   Changes:

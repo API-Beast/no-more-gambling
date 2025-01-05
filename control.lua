@@ -1,5 +1,8 @@
 local prevent_mining_entity = nil
 
+_, _, major, minor, patch = string.find(script.active_mods["base"], "(%d+).(%d+).(%d+)")
+local history_patching_enabled = major == 2 and minor == 0 and patch < 20
+
 local function get_base(name)
 	return name:gsub("%-upcrafting%-%d+", "")
 end
@@ -39,13 +42,11 @@ local function set_recipe(entity, recipe, quality)
 		return
 	end
 	local target_recipe = adjust_recipe(recipe and (recipe.name or recipe), entity.name)
-	log("Set Recipe for "..serpent.block(entity).." to "..target_recipe)
 	entity.set_recipe(target_recipe, quality)
 end
 
-
 local function patch_undo_action(action, position, base_name, new_name)
-	if action.target ~= nil then
+	if action.target ~= nil and action.target.position ~= nil then
 		if action.target.position.x == position.x and action.target.position.y == position.y and get_base(action.target.name) == base_name then
 			action.target.name = new_name
 			if action.target.recipe then
@@ -58,59 +59,48 @@ local function patch_undo_action(action, position, base_name, new_name)
 	end
 end
 
-local function patch_undo_history(position, base_name, new_name)
+local function log_undo_stack(prefix)
 	for i = 1, #game.connected_players do
 		local player = game.connected_players[i]
 		local undo_stack = player.undo_redo_stack
-		if undo_stack then
-			local undo_count = undo_stack.get_undo_item_count()
-			local redo_count = undo_stack.get_redo_item_count()
-			local l = 1
-			local to_delete = {}
-			-- Remove the last "Player Removes Entity" action and "Player Places Entity" action
-			-- Then patch the remaining actions to reference the new entity
-			for j = 1, undo_count do
-				local actions = undo_stack.get_undo_item(j)
-				for k, action in ipairs(actions) do
-					if patch_undo_action(action, position, base_name, new_name) then
-						if l <= 2 then
-							to_delete[l] = {j, k}
-							l = l + 1
-						end
-					end
-				end
+		log("--- "..prefix.."Undo for Player "..i.." ---")
+		for j = 1, undo_stack.get_undo_item_count() do
+			log(""..prefix.."Undo Item")
+			for k, action in ipairs(undo_stack.get_undo_item(j)) do
+				log(""..prefix.."Undo: "..serpent.dump(action))
 			end
-			for j = 1, redo_count do
-				local actions = undo_stack.get_redo_item(j)
-				for _, action in ipairs(actions) do
-					patch_undo_action(action, old_entity, new_name)
-				end
-			end
-			for _, index in ipairs(to_delete) do
-				log("Deleting from Undo History: ".."[" .. index[1] .. ", ".. index[2] .. "] = "..serpent.block(undo_stack.get_undo_item(index[1])[index[2]]))
-				undo_stack.remove_undo_action(index[1], index[2])
-				-- Adjust the next indicies
-				for _, next_index in ipairs(to_delete) do
-					if next_index[1] == index[1] and index[2] < next_index[2] then
-						next_index[2] = next_index[2] - 1
-					end
-				end
+		end
+		for j = 1, undo_stack.get_redo_item_count() do
+			log(""..prefix.."Redo Item")
+			for k, action in ipairs(undo_stack.get_redo_item(j)) do
+				log(""..prefix.."Redo: "..serpent.dump(action))
 			end
 		end
 	end
 end
 
-local function reinsert_preserved_undo_history(preserved_actions)
-	for i, action in ipairs(preserved_actions) do
-		local undo_item = nil
-		local undo_stack = action.stack
-		if action.type == "undo" then
-			undo_item = undo_stack.get_undo_item(action.item)
-		else
-			undo_item = undo_stack.get_redo_item(action.item)
+local function patch_history(position, base_name, new_name)
+	local result = {}
+	for i = 1, #game.connected_players do
+		local player = game.connected_players[i]
+		local undo_stack = player.undo_redo_stack
+		result[i] = {undo = {}, redo = {}}
+		if undo_stack then
+			for j = 1, undo_stack.get_undo_item_count() do
+				result[i].undo[j] = undo_stack.get_undo_item(j)
+				for k, action in ipairs(result[i].undo[j]) do
+					patch_undo_action(action, position, base_name, new_name)
+				end
+			end
+			for j = 1, undo_stack.get_redo_item_count() do
+				result[i].redo[j] = undo_stack.get_redo_item(j)
+				for k, action in ipairs(result[i].redo[j]) do
+					patch_undo_action(action, position, old_entity, new_name)
+				end
+			end
 		end
-		table.insert(undo_item, action.data)
 	end
+	return result
 end
 
 local function update_entity(entity, recipe, recipe_quality, actor)
@@ -139,10 +129,10 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	local inventories = {
 		entity.get_inventory(defines.inventory.assembling_machine_input),
 		entity.get_inventory(defines.inventory.assembling_machine_output),
-		-- entity.get_inventory(defines.inventory.assembling_machine_modules), -- Modules get transfered automatically due to "fast_replace"
+		entity.get_inventory(defines.inventory.assembling_machine_modules),
 		entity.get_inventory(defines.inventory.assembling_machine_dump),
-		-- entity.get_inventory(defines.inventory.fuel),
-		-- entity.get_inventory(defines.inventory.burnt_result),
+		entity.get_inventory(defines.inventory.fuel),
+		entity.get_inventory(defines.inventory.burnt_result)
 	}
 	local item_stacks = {}
 	for _, inventory in ipairs(inventories) do
@@ -183,7 +173,6 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		move_stuck_players = false,
 		spill = false,
 		player = player
-		-- Else it will duplicate the mineable entity
 	}
 	local extra = {
 		health = entity.health,
@@ -199,7 +188,6 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 
 	-- Remember what item requests were enabled for this entity.
 	local item_request_proxies = entity.surface.find_entities_filtered{area=entity.bounding_box, name='item-request-proxy', force=entity.force}
-	
 	local requests = {}
 	for _, request in ipairs(item_request_proxies) do
 		if request.proxy_target == entity then
@@ -211,11 +199,32 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	for i=1,#entity.fluidbox do
 		entity.fluidbox.flush(i)
 	end
-
+ 
 	-- Catch the next on_mined event
 	prevent_mining_entity = entity
-	local new_entity = entity.surface.create_entity(info)
-	patch_undo_history(info.position, base_name, target_name)
+	
+	-- History patching only works in old versions of Factorio (at least 2.0.7 confirmed)
+	local new_entity = nil
+	if history_patching_enabled then
+		log_undo_stack("Before ")
+		patch_history(info.position, base_name, target_name)
+
+		info.fast_replace = true
+		info.player = player
+		new_entity = entity.surface.create_entity(info)
+
+		local undo_stack = player.undo_redo_stack
+		undo_stack.remove_undo_action(1, 2)
+		undo_stack.remove_undo_action(1, 1)
+		log_undo_stack("After ")
+	else
+		info.fast_replace = false
+		info.player = player
+		new_entity = entity.surface.create_entity(info)
+		entity.destroy()
+	end
+
+
 	if new_entity.type == 'assembling-machine' then
 		set_recipe(new_entity, recipe, recipe_quality)
 	end
@@ -240,7 +249,7 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	end
 
 	-- Recover the item requests.
-	for request in ipairs(requests) do
+	for _, request in ipairs(requests) do
 		new_entity.surface.create_entity({
 			name = "item-request-proxy",
 			target = new_entity,
