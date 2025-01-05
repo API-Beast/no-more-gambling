@@ -4,7 +4,7 @@ data:extend({
         name = "quality-cost-increase",
         setting_type = "startup",
         minimum_value = 0.25,
-        default_value = 3.5,
+        default_value = 2.25,
 		allowed_values = {0.25, 0.5, 1.0, 1.75, 2.25, 3.5, 4.75, 6.0, 8.0, 12.0, 16.0},
 		order = "a"
     },
@@ -13,7 +13,7 @@ data:extend({
         name = "quality-crafting-time-increase",
         setting_type = "startup",
         minimum_value = 0.0,
-        default_value = 0.5,
+        default_value = 0.0,
 		allowed_values = {0.0, 0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 8.0},
 		order = "b"
     },

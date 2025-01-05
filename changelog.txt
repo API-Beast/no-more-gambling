@@ -1,47 +1,63 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+  Balance:
+  - Default Cost Increase lowered from +350% to +225%.
+  - Default Time Increase lowered from +50% to 0%.
+  - Recyling recipes are hardcoded to not consider 25% of the ingredients as cost, making upcycling slightly cheaper.
+  - Productivity research now also affect upcrafted recipes.
+    - The productivity cap of recipes scales with the cost increase, so there is a use for researching productivity increases more than 30 times now.
+  Features:
+  - New Machine: The Fabricator is an Assembling Machine with a built-in +50% Quality modifier (same cost increase as a quality module), but it can only craft Intermediate Products (including Metallurgy and Chemistry).
+    - The Fabricator also has a built-in 20% Productivity modifier to stay relevant even after setting up Quality Module 3 production.
+  - New Technology that unlocks the Fabricator and Uncommon quality, allowing some early quality crafting even before Plastic production.
+  - Improved logic for self-referential recipes. Cost increase now calculates the actual "cost" of the recipe, ignoring items that you get back once the recipe is finished.
+    - For example Ore Washing takes 5 ore as ingredient, but creates 2-3 ore as output, meaning the ore cost is now calculated as 5 - 2.5 = 2.5.
+    - Upcrafting Pentapod Eggs and Bacteria now only requires additional nutrients/bioflux/water, as they take less inputs than outputs.
+    - And of course the same logic applies to all the asteroid processing and all self-referential recipes from mods as well.
+---------------------------------------------------------------------------------------------------
 Version: 1.1.2
   Changes:
-    - Fix errors from entities that aren't placable by anything. (Mod compatiblity.)
+  - Fix errors from entities that aren't placable by anything. (Mod compatiblity.)
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.1
   Changes:
-    - Fix typo in copying placeable_by.
+  - Fix typo in copying placeable_by.
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.0
   Features:
-    - The total cost increase and time increase is now displayed on the crafting machine.
-    - Implement Setting Copy & Paste for machines with differing amounts of Quality modules.
-    - Explicitly hide upcrafting recipes from Signal UI.
+  - The total cost increase and time increase is now displayed on the crafting machine.
+  - Implement Setting Copy & Paste for machines with differing amounts of Quality modules.
+  - Explicitly hide upcrafting recipes from Signal UI.
   Changes:
-    - More robust code to detect the correct placeable_by property. (Better mod compatiblity.)
-    - More robust entity replacement:
-      - Fix some crafting machines not keeping their rotation when inserting/removing quality modules.
-      - Fix losing modules when selecting recipe that is incompatible with said module.
-      - Flush fluids when adding/removing quality modules so that they don't get lost.
+  - More robust code to detect the correct placeable_by property. (Better mod compatiblity.)
+  - More robust entity replacement:
+    - Fix some crafting machines not keeping their rotation when inserting/removing quality modules.
+    - Fix losing modules when selecting recipe that is incompatible with said module.
+    - Flush fluids when adding/removing quality modules so that they don't get lost.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.5
   Changes:
-    - Experimental fix for mod incompabtiblity.
+  - Experimental fix for mod incompabtiblity.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.4
   Changes:
-    - Fix recyling recipes not being unlocked.
+  - Fix recyling recipes not being unlocked.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.3
   Changes:
-    - Hide upcrafting recipe unlocks on technology UI.
+  - Hide upcrafting recipe unlocks on technology UI.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.2
   Features:
-    - Detect recipes that require more than 65k of an ingredient and disables them. Gives a nice warning message in the description too.
-    - Now supports recipes without ingredients. In this case time/energy will be increased instead by modules.
-    - Quality recipes should only be enabled after researching the appropriate tech. This was a minor oversight.
+  - Detect recipes that require more than 65k of an ingredient and disables them. Gives a nice warning message in the description too.
+  - Now supports recipes without ingredients. In this case time/energy will be increased instead by modules.
+  - Quality recipes should only be enabled after researching the appropriate tech. This was a minor oversight.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.1
   Changes:
-    - Fixed mod ignoring higher quality quality modules.
-    - No longer create variants for crafting machines that don't accept quality modules. (Better mod compatiblity.)
+  - Fixed mod ignoring higher quality quality modules.
+  - No longer create variants for crafting machines that don't accept quality modules. (Better mod compatiblity.)
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.0
   Changes:
-    - Initial release.
+  - Initial release.

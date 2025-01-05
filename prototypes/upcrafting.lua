@@ -1,47 +1,94 @@
-local function generate_upcrafting_recipe(recipe, n)
-	local solid_product_found = false
-	local main_product = nil
-	for k,v in pairs(recipe.results) do
-	  if v.type == "item" then
-	  	solid_product_found = true
-		main_product = v.name
-		break
-	  end
-	end
+local function get_base(name)
+	local result, _ = name:gsub("%-upcrafting%-%d+", "")
+	return result
+end
 
+local function generate_upcrafting_recipe(recipe, n)
 	local cost_factor = 1.0 + n * settings.startup["quality-cost-increase"].value
 	local energy_factor = 1.0 + n * settings.startup["quality-crafting-time-increase"].value
+
+	local recipe_map = {}
+	local solid_product_found = false
+	local solid_input_found = false
+	local main_product = nil
+	for k, v in pairs(recipe.ingredients) do
+		if v.name ~= nil then
+			recipe_map[v.name] = recipe_map[v.name] or {type = v.type, input = 0.0, expected_output = 0.0, output = 0.0, output_variance = 0.0, probability = 1.0}
+			local map = recipe_map[v.name]
+			map.input = map.input + v.amount
+		end
+	end
+	for k,v in pairs(recipe.results) do
+		if v.name ~= nil then
+			recipe_map[v.name] = recipe_map[v.name] or {type = v.type, input = 0.0, expected_output = 0.0, output = 0.0, output_variance = 0.0, probability = 1.0}
+			local map = recipe_map[v.name]
+			if v.amount then
+				map.output = map.output + v.amount
+			elseif v.amount_min and v.amount_max then
+				map.output = map.output + v.amount_min
+				map.output_variance = map.output_variance + (v.amount_max - v.amount_min)
+			end
+			if v.extra_count_fraction then
+				map.output = map.output + v.extra_count_fraction
+			end
+			if v.probability then
+				map.probability = v.probability
+			end
+		end
+	end
+
+	for k,v in pairs(recipe_map) do
+		if recipe.category == "recycling" or recipe.category == "recycling-or-hand-crafting" then
+			v.expected_output = 0.25
+		else
+			v.expected_output = (v.output + v.output_variance) * v.probability
+		end
+
+		if v.type == "item" and (v.output > 0.0 or v.output_variance > 0.0) and main_product == nil then
+			solid_product_found = true
+			main_product = v.name
+		end
+		if v.type == "item" and v.input > 0.0 then
+			solid_input_found = true
+		end
+	end
+
+	main_product = recipe.main_product or main_product
+	local main_product_prototype = main_product and data.raw.item[main_product]
+
 	local cpy = table.deepcopy(recipe)
 	cpy.name = recipe.name.."-upcrafting-"..n
 	if recipe.localised_name == nil then
-		cpy.localised_name = {"?", {"recipe-name." .. recipe.name}, {"item-name." .. (recipe.main_product or recipe.name)}, {"entity-name." .. (recipe.main_product or main_product or recipe.name)}}
+		cpy.localised_name = {"?", {"recipe-name." .. recipe.name}, {"item-name." .. (main_product or recipe.name)}, {"entity-name." .. (main_product or recipe.name)}, {"equipment-name." .. (main_product or recipe.name)}}
 	end
-	cpy.category = (recipe.category or "crafting").."-upcrafting-"..n
+	cpy.category = get_base((recipe.category or "crafting")).."-upcrafting-"..n
 	cpy.allow_decomposition = false
 	cpy.hide_from_player_crafting = true
 	cpy.hidden_in_factoriopedia = true
 	cpy.hide_from_signal_gui = true
 
-	-- Quality does nothing for pure fluid recipes.
 	local disable_recipe = false
 	if solid_product_found == true then
 		cpy.maximum_productivity = (recipe.maximum_productivity or 3.0) * cost_factor
-		-- cpy.emissions_multiplier = (recipe.emissions_multiplier or 1.0) * cost_factor / energy_factor
-		cpy.energy_required = (recipe.energy_required or 0.5) * energy_factor
-		if cpy.ingredients and #cpy.ingredients > 0 then
+		if cpy.ingredients == nil or #cpy.ingredients == 0 then
+			local energy = (recipe.energy_required or 0.5)
+			cpy.energy_required = energy + energy * (energy_factor - 1.0) + energy * (cost_factor - 1.0)
+		else
+			cpy.energy_required = (recipe.energy_required or 0.5) * energy_factor
 			for i, item in ipairs(cpy.ingredients) do
-				cpy.ingredients[i].amount = item.amount * cost_factor
-				if cpy.ingredients[i].amount > 65535 then
+				local amount = recipe_map[item.name].input + math.max(recipe_map[item.name].input - recipe_map[item.name].expected_output, 0.0) * (cost_factor - 1.0)
+				local integerPart, fractionalPart = math.modf(amount)
+				item.amount = integerPart
+				if item.amount > 65535 then
 					disable_recipe = true
 				end
 			end
-		else
-			cpy.energy_required = (recipe.energy_required or 0.5) * (energy_factor * cost_factor)
 		end
 	end
 
 	if disable_recipe then
 		cpy.ingredients = table.deepcopy(recipe.ingredients or {})
+		cpy.results = table.deepcopy(recipe.results or {})
 		cpy.localised_description = {"quality-crafting-impossible", tostring(n)}
 		cpy.allow_quality = false
 	end
@@ -115,30 +162,38 @@ local function generate_crafting_machine_variants(entity)
 		end
 	end
 
-	local entity_variants = {entity.name}
-	local max = settings.startup["quality-module-cap"].value
-	for n=1,max do
-		table.insert(entity_variants, entity.name.."-upcrafting-"..n)
+	local base_module_count = 0
+
+	local update_description = function(entity, n)
+		local cost_increase = settings.startup['quality-cost-increase'].value * 100.0 * n
+		local time_increase = settings.startup['quality-crafting-time-increase'].value * 100.0 * n
+		entity.localised_description = { "", {"description.quality-cost-increase", tostring(cost_increase)} }
+		if time_increase > 1.0 then
+			entity.localised_description = { "", {"description.quality-cost-increase", tostring(cost_increase)}, "\n", {"description.quality-crafting-time-increase", tostring(time_increase)} }
+		end
 	end
-	for n=1,max do
+
+	if entity.name == "fabricator" then
+		base_module_count = 1
+		update_description(entity, 1)
+	end
+
+	local max = settings.startup["quality-module-cap"].value
+	for n=1+base_module_count,max do
 		local cpy = table.deepcopy(entity)
 		cpy.name = entity.name.."-upcrafting-"..n
-		for i, category in ipairs(entity.crafting_categories) do
-			cpy.crafting_categories[i] = category.."-upcrafting-"..n
-		end
 		if entity.localised_name == nil then
 			cpy.localised_name = {"entity-name." .. entity.name}
 		end
 
-		local cost_increase = settings.startup['quality-cost-increase'].value * 100.0 * n
-		local time_increase = settings.startup['quality-crafting-time-increase'].value * 100.0 * n
-		cpy.localised_description = { "", {"description.quality-cost-increase", tostring(cost_increase)} }
-		if time_increase > 1.0 then
-			cpy.localised_description = { "", {"description.quality-cost-increase", tostring(cost_increase)}, "\n", {"description.quality-crafting-time-increase", tostring(time_increase)} }
-		end
+		update_description(cpy, n)
 
-		if entity.fixed_recipe ~= nil then
-			cpy.fixed_recipe = entity.fixed_recipe.."-upcrafting-"..n
+		for i, category in ipairs(cpy.crafting_categories) do
+			log(get_base(category))
+			cpy.crafting_categories[i] = get_base(category).."-upcrafting-"..n
+		end
+		if cpy.fixed_recipe ~= nil then
+			cpy.fixed_recipe = get_base(cpy.fixed_recipe).."-upcrafting-"..n
 		end
 
 		if #placeable_by >= 1 then
@@ -146,8 +201,6 @@ local function generate_crafting_machine_variants(entity)
 		end
 		cpy.deconstruction_alternative = entity.name
 		cpy.hidden = true
-		-- Not necessary, it seems the base game already allows copy pasting settings between any crafting machines
-		-- cpy.additional_pasteable_entities = entity_variants
 		data:extend(
 			{cpy}
 		)
@@ -189,6 +242,22 @@ local function technology_add_recipes(technology)
 				local name = base_recipe.."-upcrafting-"..n
 				if data.raw['recipe'][name] then
 					table.insert(technology.effects, {type = "unlock-recipe", recipe = name, hidden = true})
+				end
+				if data.raw['recipe'][base_recipe.."-fabrication-upcrafting-"..n] then
+					table.insert(technology.effects, {type = "unlock-recipe", recipe = base_recipe.."-fabrication-upcrafting-"..n, hidden = true})
+				end
+			end
+		end
+		if effect.type == "change-recipe-productivity" then
+			local base_recipe = effect.recipe
+			for n=1,max do
+				local name = base_recipe.."-upcrafting-"..n
+				-- local cost_factor = 1.0 + settings.startup['quality-cost-increase'].value * n
+				if data.raw['recipe'][name] then
+					table.insert(technology.effects, {type = "change-recipe-productivity", recipe = name, change = effect.change, hidden = true})
+				end
+				if data.raw['recipe'][base_recipe.."-fabrication-upcrafting-"..n] then
+					table.insert(technology.effects, {type = "change-recipe-productivity", recipe = name, change = effect.change, hidden = true})
 				end
 			end
 		end

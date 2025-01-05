@@ -23,7 +23,9 @@ local function adjust_recipe(recipe_name, crafter_name)
 		return recipe_name
 	end
 	local match = string.match(crafter_name, "%-upcrafting%-(%d+)")
-    local num_quality_mods = match and tonumber(match) or 0
+	local base_name = get_base(crafter_name)
+	local num_base_quality_mods = (base_name == "fabricator" and 1 or 0)
+    local num_quality_mods = match and tonumber(match) or num_base_quality_mods
 	local base_recipe = get_base(recipe_name)
 	local target_recipe = base_recipe.."-upcrafting-"..num_quality_mods
 	if num_quality_mods == 0 then
@@ -86,7 +88,6 @@ local function patch_undo_history(position, base_name, new_name)
 			end
 			for _, index in ipairs(to_delete) do
 				log("Deleting from Undo History: ".."[" .. index[1] .. ", ".. index[2] .. "] = "..serpent.block(undo_stack.get_undo_item(index[1])[index[2]]))
-				log(serpent.block(last_item))
 				undo_stack.remove_undo_action(index[1], index[2])
 				-- Adjust the next indicies
 				for _, next_index in ipairs(to_delete) do
@@ -123,10 +124,11 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		return false
 	end
 
-	local num_quality_mods = count_modules(entity)
 	local base_name = get_base(entity.name)
+	local num_base_quality_mods = (base_name == "fabricator" and 1 or 0)
+	local num_quality_mods = num_base_quality_mods + count_modules(entity)
 	local target_name = base_name.."-upcrafting-"..num_quality_mods
-	if num_quality_mods == 0 then
+	if num_quality_mods == num_base_quality_mods then
 		target_name = base_name
 	end
 
@@ -246,7 +248,7 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 				name = "item-request-proxy",
 				target = new_entity,
 				modules = {{id = {name = request.name, quality = request.quality}, items = {in_inventory = {{inventory = defines.inventory.assembling_machine_modules, stack = stack, count = 1}}, grid_count = nil}}},
-				fast_replace = true,
+				fast_replace = false,
 				position = new_entity.position,
 				force = new_entity.force
 			})
