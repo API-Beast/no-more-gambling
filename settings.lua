@@ -50,5 +50,14 @@ data:extend({
         default_value = 0.01,
 		allowed_values = {0.0025, 0.005, 0.01, 0.02, 0.04, 0.1},
 		order = "f"
+    },
+	{
+        type = "int-setting",
+        name = "no-more-gambling-scan-chunks-per-second",
+        setting_type = "runtime-global",
+        minimum_value = 1,
+		maximum_value = 10000,
+        default_value = 250,
+		order = "g"
     }
 })

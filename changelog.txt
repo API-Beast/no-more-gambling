@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.3
+  Changes:
+  - Lower performance impact by roughly 100x by scanning more lazily.
+---------------------------------------------------------------------------------------------------
 Version: 1.2.2
   Changes:
   - Blacklist recipes from promethium-quality for compatiblity.
