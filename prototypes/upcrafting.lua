@@ -78,7 +78,7 @@ local function generate_upcrafting_recipe(recipe, n)
 			for i, item in ipairs(cpy.ingredients) do
 				local amount = recipe_map[item.name].input + math.max(recipe_map[item.name].input - recipe_map[item.name].expected_output, 0.0) * (cost_factor - 1.0)
 				local integerPart, fractionalPart = math.modf(amount)
-				item.amount = integerPart
+				item.amount = math.max(integerPart, item.amount)
 				if item.amount > 65535 then
 					disable_recipe = true
 				end

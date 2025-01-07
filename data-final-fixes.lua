@@ -1,16 +1,25 @@
+local category_blacklist, machine_blacklist = unpack(require("blacklists"))
 local upcrafting = require("prototypes.upcrafting")
 
 for name, category in pairs(data.raw['recipe-category']) do
-	upcrafting.generate_crafting_category_variants(category)
+	if not category_blacklist[name] then
+		upcrafting.generate_crafting_category_variants(category)
+	end
 end
 for name, recipe in pairs(data.raw['recipe']) do
-	upcrafting.generate_recipe_variants(recipe)
+	if not category_blacklist[recipe.category] then
+		upcrafting.generate_recipe_variants(recipe)
+	end
 end
 for name, entity in pairs(data.raw['assembling-machine']) do
-	upcrafting.generate_crafting_machine_variants(entity)
+	if not machine_blacklist[name] then
+		upcrafting.generate_crafting_machine_variants(entity)
+	end
 end
 for name, entity in pairs(data.raw['furnace']) do
-	upcrafting.generate_crafting_machine_variants(entity)
+	if not machine_blacklist[name] then
+		upcrafting.generate_crafting_machine_variants(entity)
+	end
 end
 for name, tech in pairs(data.raw['technology']) do
 	upcrafting.technology_add_recipes(tech)

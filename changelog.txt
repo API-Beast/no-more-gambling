@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.2
+  Changes:
+  - Blacklist recipes from promethium-quality for compatiblity.
+---------------------------------------------------------------------------------------------------
 Version: 1.2.1
   Changes:
   - New inventory transfer logic.

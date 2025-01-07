@@ -3,6 +3,8 @@ local prevent_mining_entity = nil
 _, _, major, minor, patch = string.find(script.active_mods["base"], "(%d+).(%d+).(%d+)")
 local history_patching_enabled = major == 2 and minor == 0 and patch < 20
 
+local category_blacklist,machine_blacklist = unpack(require("blacklists"))
+
 local function get_base(name)
 	return name:gsub("%-upcrafting%-%d+", "")
 end
@@ -111,6 +113,10 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 
 	-- Don't mess with random, modded, possibly scripted entities
 	if entity.has_flag("not-selectable-in-game") then
+		return false
+	end
+
+	if machine_blacklist[entity.name] then
 		return false
 	end
 
