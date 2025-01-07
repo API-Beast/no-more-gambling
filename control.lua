@@ -2,6 +2,8 @@ local prevent_mining_entity = nil
 
 _, _, major, minor, patch = string.find(script.active_mods["base"], "(%d+).(%d+).(%d+)")
 local history_patching_enabled = major == 2 and minor == 0 and patch < 20
+local chunks_per_second = settings.global['no-more-gambling-scan-chunks-per-second'].value
+local module_cap = settings.startup["quality-module-cap"].value
 
 local category_blacklist,machine_blacklist = unpack(require("blacklists"))
 
@@ -20,7 +22,7 @@ local function count_modules(entity)
 			end
 		end
 	end
-	return math.min(count, settings.startup["quality-module-cap"].value)
+	return math.min(count, module_cap)
 end
 
 local function adjust_recipe(recipe_name, crafter_name)
@@ -270,6 +272,27 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	return true
 end
 
+local active_chunks = {}
+local last_active_chunks = {}
+local function mark_chunk_as_active(position, surface)
+    local left_top = {x = math.floor(position.x / 32) * 32, y = math.floor(position.y / 32) * 32}
+    local right_bottom = { x = left_top.x + 32, y = left_top.y + 32}
+    active_chunks[surface.index..":"..position.x..","..position.y] = {surface = surface, area = {left_top = left_top, right_bottom = right_bottom}}
+end
+
+local function mark_as_active(event)
+	if event.entity ~= nil then
+		mark_chunk_as_active(event.entity.position, event.entity.surface)
+	end
+	if event.area ~= nil and event.surface ~= nil then
+		for y = event.area.left_top.y, event.area.right_bottom.y,32 do
+		for x = event.area.left_top.x, event.area.right_bottom.x,32 do
+			mark_chunk_as_active({x = x, y = y}, event.surface)
+		end
+		end
+	end
+end
+
 local function on_built(event)
 	if event.entity == nil then
 		return
@@ -303,7 +326,7 @@ local function on_entity_settings_pasted(event)
 	end
 end
 
-local function rescan()
+local function scan_all()
     for _, surface in pairs(game.surfaces) do
         for _, entity in pairs(surface.find_entities_filtered{type={"furnace", "assembling-machine"}}) do
 			local recipe, quality = entity.get_recipe()
@@ -312,9 +335,69 @@ local function rescan()
     end
 end
 
-script.on_init(rescan)
-script.on_configuration_changed(rescan)
-script.on_nth_tick(30, rescan)
+local surface_iterator = nil
+local surface_key = nil	
+local chunk_iterator = nil
+local surface = nil
+local chunk = nil
+local function scan_chunk(chunk, surface)
+	if chunk ~= nil then
+		for _, entity in pairs(surface.find_entities_filtered{type={"furnace", "assembling-machine"}, area={{chunk.area.left_top.x, chunk.area.left_top.y}, {chunk.area.right_bottom.x, chunk.area.right_bottom.y}}}) do
+			local recipe, quality = entity.get_recipe()
+			update_entity(entity, recipe, quality)
+		end
+		rendering.draw_rectangle{surface = surface, filled = true, left_top = {chunk.area.left_top.x, chunk.area.left_top.y}, right_bottom = {chunk.area.right_bottom.x, chunk.area.right_bottom.y}, color = {1.0, 0.5, 0.25, 0.1}, time_to_live = 240}
+	end
+end
+
+local function scan_next_inactive_chunk()
+	if surface_iterator == nil then
+		surface_iterator = pairs(game.surfaces)
+		surface_key = nil
+	end
+	if surface == nil then
+		surface_key, surface = surface_iterator(surface_key)
+	end
+	if chunk_iterator == nil and surface ~= nil then
+		chunk_iterator = surface.get_chunks()
+	end
+	chunk = chunk_iterator()
+	if chunk == nil then
+		surface_key, surface = surface_iterator(surface_key)
+		if surface == nil then return end
+		chunk_iterator = surface.get_chunks()
+		return false -- Wait for next call in order to avoid infinite loop
+	end
+	scan_chunk(chunk, surface)
+	return true
+end
+
+local function scan_next_inactive_chunks()
+	if chunks_per_second >= 10000 then
+		scan_all()
+	else
+		for i = 0, chunks_per_second / 2 do
+			if scan_next_inactive_chunk() == false then
+				break
+			end
+		end
+	end
+end
+
+local function scan_active_chunks()
+    for _, chunk in pairs(active_chunks) do
+		scan_chunk(chunk, chunk.surface)
+    end
+    for _, chunk in pairs(last_active_chunks) do
+		scan_chunk(chunk, chunk.surface)
+    end
+	last_active_chunks = active_chunks
+	active_chunks = {}
+end
+
+script.on_init(scan_all)
+script.on_configuration_changed(scan_all)
+script.on_nth_tick(30, function() scan_next_inactive_chunks() scan_active_chunks() end)
 
 local filter = {filter = "crafting-machine"}
 script.on_event(defines.events.on_built_entity, on_built, {filter})
@@ -324,5 +407,23 @@ script.on_event(defines.events.on_player_fast_transferred, on_built)
 script.on_event(defines.events.on_player_flipped_entity, on_built)
 script.on_event(defines.events.on_entity_settings_pasted, on_entity_settings_pasted)
 
+script.on_event(defines.events.on_built_entity, mark_as_active)
+script.on_event(defines.events.on_robot_built_entity, mark_as_active)
+script.on_event(defines.events.on_space_platform_built_entity, mark_as_active)
+script.on_event(defines.events.on_player_fast_transferred, mark_as_active)
+script.on_event(defines.events.on_entity_settings_pasted, mark_as_active)
+script.on_event(defines.events.on_entity_cloned, mark_as_active)
+script.on_event(defines.events.on_gui_opened, mark_as_active)
+script.on_event(defines.events.on_robot_mined_entity, mark_as_active)
+script.on_event(defines.events.on_robot_pre_mined, mark_as_active)
+script.on_event(defines.events.on_player_flipped_entity, mark_as_active)
+script.on_event(defines.events.on_player_selected_area, mark_as_active)
+script.on_event(defines.events.on_player_setup_blueprint, mark_as_active)
+script.on_event(defines.events.script_raised_built, mark_as_active)
+script.on_event(defines.events.script_raised_destroy, mark_as_active)
+script.on_event(defines.events.script_raised_revive, mark_as_active)
+ 
 script.on_event(defines.events.on_player_mined_entity, on_mined, {filter})
 script.on_event(defines.events.on_space_platform_mined_entity, on_mined, {filter})
+
+script.on_event(defines.events.on_runtime_mod_setting_changed, function() chunks_per_second = settings.global['no-more-gambling-scan-chunks-per-second'].value end)
