@@ -126,21 +126,15 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 		return false
 	end
 
-	local inventories = {
-		entity.get_inventory(defines.inventory.assembling_machine_input),
-		entity.get_inventory(defines.inventory.assembling_machine_output),
-		entity.get_inventory(defines.inventory.assembling_machine_modules),
-		entity.get_inventory(defines.inventory.assembling_machine_dump),
-		entity.get_inventory(defines.inventory.fuel),
-		entity.get_inventory(defines.inventory.burnt_result)
-	}
 	local item_stacks = {}
-	for _, inventory in ipairs(inventories) do
+	for key, inventory_id in pairs(defines.inventory) do
+		local inventory = entity.get_inventory(inventory_id)
 		if inventory then
 			for i = 1, #inventory do
 				local item_stack = inventory[i]
 				if item_stack and item_stack.valid_for_read then
-					table.insert(item_stacks, {
+					item_stacks[inventory_id] = item_stacks[inventory_id] or {}
+					item_stacks[inventory_id][i] = {
 						name = item_stack.name,
 						count = item_stack.count,
 						quality = item_stack.quality,
@@ -150,7 +144,7 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 						tags = (item_stack.is_item_with_tags and item_stack.tags) or nil,
 						custom_description = (item_stack.is_item_with_tags and item_stack.custom_description) or nil,
 						spoil_percent = item_stack.spoil_percent
-					})
+					}
 				end
 			end
 			inventory.clear()
@@ -240,11 +234,18 @@ local function update_entity(entity, recipe, recipe_quality, actor)
 	if actor then
 		dump = actor
 	end
-	for i = 1, #item_stacks do
-		if new_entity.can_insert(item_stacks[i]) then
-			new_entity.insert(item_stacks[i])
-		else
-			dump.insert(item_stacks[i])
+	for inventory_id, items in pairs(item_stacks) do
+		local inventory = new_entity.get_inventory(inventory_id)
+		for i, stack in pairs(items) do
+			if inventory and inventory[i] and inventory[i].can_set_stack(stack) then
+				inventory[i].transfer_stack(stack)
+			elseif inventory and inventory.can_insert(items[i]) then
+				inventory.insert(items[i])
+			elseif new_entity.can_insert(items[i]) then
+				new_entity.insert(items[i])
+			else
+				dump.insert(items[i])
+			end
 		end
 	end
 

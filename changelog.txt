@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.1
+  Changes:
+  - New inventory transfer logic.
+  - Fixes modules being transfered to recyler inputs when quality modules get inserted.
+  - Fixes modules jumping slots when quality modules get inserted.
+---------------------------------------------------------------------------------------------------
 Version: 1.2.0
   Known Issues:
   - Version 2.0.28 of Factorio doesn't allow for undo patching anymore. This does not seem to be fixable. The undo history patching has been disabled if the game version is above 2.0.20.
