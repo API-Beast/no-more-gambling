@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.5
+  Changes:
+  - Fix Normal quality having level of Uncommons
+---------------------------------------------------------------------------------------------------
 Version: 1.2.4
   Changes:
   - Fabricator tech requirment should be "Automation 2", not "Modules".

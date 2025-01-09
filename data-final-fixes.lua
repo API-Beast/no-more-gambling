@@ -42,13 +42,15 @@ local level_increase = settings.startup["quality-level-increase"].value
 local level_increase_increase = settings.startup["quality-level-increase-increase"].value
 local quality = data.raw['quality']['normal']
 local depth = 0.0
-local level = 1
-while quality do
-	depth = depth + 1.0
-	quality.level = level
-	level = math.floor(level + level_increase)
-	level_increase = level_increase + level_increase_increase
-	quality = data.raw['quality'][quality.next]
+local level = 0
+if level_increase ~= 1.0 or level_increase_increase ~= 0.0 then
+	while quality do
+		depth = depth + 1.0
+		quality.level = level
+		level = math.floor(level + level_increase)
+		level_increase = level_increase + level_increase_increase
+		quality = data.raw['quality'][quality.next]
+	end
 end
 
 for name, quality in pairs(data.raw['quality']) do
