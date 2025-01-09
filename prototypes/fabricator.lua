@@ -38,7 +38,7 @@ data:extend
 			quality = "uncommon"
 		  }
 		},
-		prerequisites = { "modules" },
+		prerequisites = { "automation-2" },
 		unit =
 		{
 		  count = 50,

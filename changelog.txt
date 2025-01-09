@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.4
+  Changes:
+  - Fabricator tech requirment should be "Automation 2", not "Modules".
+  - Added additional settings for tweaking the quality level curve.
+---------------------------------------------------------------------------------------------------
 Version: 1.2.3
   Changes:
   - Lower performance impact by roughly 100x by scanning more lazily.

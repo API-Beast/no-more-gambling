@@ -33,15 +33,6 @@ data:extend({
         default_value = true,
 		order = "d"
 	},
-    {
-        type = "double-setting",
-        name = "quality-epic-legendary-quality-curve",
-        setting_type = "startup",
-        minimum_value = 0.2,
-        default_value = 0.75,
-		allowed_values = {0.2, 0.4, 0.5, 0.6, 0.75, 0.8, 1.0},
-		order = "e"
-    },
 	{
         type = "double-setting",
         name = "quality-skip-chance",
@@ -49,7 +40,34 @@ data:extend({
         minimum_value = 0.0025,
         default_value = 0.01,
 		allowed_values = {0.0025, 0.005, 0.01, 0.02, 0.04, 0.1},
+		order = "e"
+    },
+	{
+        type = "double-setting",
+        name = "quality-epic-legendary-quality-curve",
+        setting_type = "startup",
+        minimum_value = 0.2,
+        default_value = 0.75,
+		allowed_values = {0.2, 0.4, 0.5, 0.6, 0.75, 0.8, 1.0},
 		order = "f"
+    },
+	{
+        type = "int-setting",
+        name = "quality-level-increase",
+        setting_type = "startup",
+        minimum_value = 1,
+        default_value = 1,
+		allowed_values = {1, 2, 3, 4, 5},
+		order = "g"
+    },
+	{
+        type = "double-setting",
+        name = "quality-level-increase-increase",
+        setting_type = "startup",
+        minimum_value = 0.0,
+        default_value = 0.0,
+		allowed_values = {0.0, 0.25, 0.35, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0},
+		order = "h"
     },
 	{
         type = "int-setting",
@@ -58,6 +76,6 @@ data:extend({
         minimum_value = 1,
 		maximum_value = 10000,
         default_value = 250,
-		order = "g"
+		order = "a"
     }
 })
